@@ -146,6 +146,8 @@ def listar_times():
 
     with open(ARQ_TIME, 'rb') as times:
         length = os.stat(ARQ_TIME).st_size
+        print('ID'.rjust(4), 'login'.ljust(8), 'time'.ljust(30), sep=' | ')
+        print('=' * 48)
         while times.tell() < length:
             time_bin = times.read(struct.calcsize(TIME_STRUCT_FORMAT))
             time_unpacked = struct.unpack(TIME_STRUCT_FORMAT, time_bin)
@@ -155,8 +157,6 @@ def listar_times():
                 'senha': time_unpacked[2].decode('utf-8'),
                 'nome':  time_unpacked[3].decode('utf-8'),
             }
-            print('ID'.rjust(4), 'login'.ljust(8), 'time'.ljust(30), sep=' | ')
-            print('=' * 48)
             print(str(time['id']).rjust(4, '0'), 
                   time['login'].strip('\x00').ljust(8),
                   time['nome'].strip('\x00').ljust(30), sep=' | ')
@@ -164,7 +164,36 @@ def listar_times():
 
 
 def listar_competidores():
-    pass
+    print('-' * 60)
+    print('LISTAGEM DE COMPETIDORES'.center(60))
+    print('-' * 60)
+
+    competidores = []
+    with open(ARQ_COMP, 'rb') as comps:
+        length = os.stat(ARQ_COMP).st_size
+        print('ID'.rjust(5), 'nome'.ljust(13), 'email'.ljust(19),
+              'time'.ljust(9), 'Nascimento'.ljust(10), sep='|')
+        while comps.tell() < length:
+            comp_bin = comps.read(struct.calcsize(COMP_STRUCT_FORMAT))
+            comp_unpacked = struct.unpack(COMP_STRUCT_FORMAT, comp_bin)
+            comp = {
+                'id': comp_unpacked[0],
+                'id_time': comp_unpacked[1],
+                'time': _get_time(comp_unpacked[1]),
+                'nome': comp_unpacked[2].decode('utf-8').strip('\x00'),
+                'email': comp_unpacked[3].decode('utf-8').strip('\x00'),
+                'nasc': (comp_unpacked[4], comp_unpacked[5], comp_unpacked[6])
+            }
+            print(str(comp['id']).rjust(5), comp['nome'].ljust(13),
+                  comp['email'].ljust(19), comp['time'].ljust(9),
+                  '/'.join([str(x) for x in comp['nasc']]).rjust(10), sep='|')
+            competidores.append(comp)
+    print()
+    if input('Deseja salvar a listagem? [Y/n]') == 'Y':
+        print()
+        _save_listagem_competidores(competidores)
+        print('Listagem salva em:', ARQ_LISTAGEM)
+    print()
 
 
 def gerar_emails():
@@ -173,3 +202,22 @@ def gerar_emails():
 
 def gerar_etiquetas():
     pass
+
+
+def _get_time(id):
+    with open(ARQ_TIME, 'rb') as times:
+        times.seek((id - 1) * struct.calcsize(TIME_STRUCT_FORMAT))
+        time_bin = times.read(struct.calcsize(TIME_STRUCT_FORMAT))
+        time_unpacked = struct.unpack(TIME_STRUCT_FORMAT, time_bin)
+        return time_unpacked[1].decode('utf-8').strip('\x00')
+
+
+def _save_listagem_competidores(comps):
+    with open(ARQ_LISTAGEM, 'w') as file:
+        print('ID'.rjust(5), 'nome'.ljust(60), 'email'.ljust(40),
+              'time'.ljust(30), 'Nascimento'.ljust(10), sep='|', file=file)
+        for comp in comps:
+            print(str(comp['id']).rjust(5), comp['nome'].ljust(13),
+                  comp['email'].ljust(19), comp['time'].ljust(9),
+                  '/'.join([str(x) for x in comp['nasc']]).rjust(10),
+                  sep='|', file=file)
