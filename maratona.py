@@ -139,7 +139,29 @@ def consultar_time():
 
 
 def listar_times():
-    pass
+    print('-' * 60)
+    print('LISTAGEM DE TIMES'.center(60))
+    print('-' * 60)
+    print()
+
+    with open(ARQ_TIME, 'rb') as times:
+        length = os.stat(ARQ_TIME).st_size
+        while times.tell() < length:
+            time_bin = times.read(struct.calcsize(TIME_STRUCT_FORMAT))
+            time_unpacked = struct.unpack(TIME_STRUCT_FORMAT, time_bin)
+            time = {
+                'id': time_unpacked[0],
+                'login': time_unpacked[1].decode('utf-8'),
+                'senha': time_unpacked[2].decode('utf-8'),
+                'nome':  time_unpacked[3].decode('utf-8'),
+            }
+            print('ID'.rjust(4), 'login'.ljust(8), 'time'.ljust(30), sep=' | ')
+            print('=' * 48)
+            print(str(time['id']).rjust(4, '0'), 
+                  time['login'].strip('\x00').ljust(8),
+                  time['nome'].strip('\x00').ljust(30), sep=' | ')
+        print()
+
 
 def listar_competidores():
     pass
