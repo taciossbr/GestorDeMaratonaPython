@@ -211,7 +211,23 @@ def gerar_emails():
 
 
 def gerar_etiquetas():
-    pass
+    with open(ARQ_TIME, 'rb') as times, open(ARQ_ETIQUETAS, 'w') as et:
+        length = os.stat(ARQ_TIME).st_size
+        while times.tell() < length:
+            time_bin = times.read(struct.calcsize(TIME_STRUCT_FORMAT))
+            time_unpacked = struct.unpack(TIME_STRUCT_FORMAT, time_bin)
+            time = {
+                'id': time_unpacked[0],
+                'login': time_unpacked[1].decode('utf-8').strip('\x00'),
+                'senha': time_unpacked[2].decode('utf-8').strip('\x00'),
+                'nome':  time_unpacked[3].decode('utf-8').strip('\x00'),
+            }
+            print(time['nome'], file=et)
+            print(time['login'], file=et)
+            print(time['senha'], file=et)
+            print('(', ', '.join(_get_comps_name_time(time['id'])), ')', 
+                  sep='', file=et)
+            print(file=et)
 
 
 def _get_time(id):
@@ -231,3 +247,15 @@ def _save_listagem_competidores(comps):
                   comp['email'].ljust(19), comp['time'].ljust(9),
                   '/'.join([str(x) for x in comp['nasc']]).rjust(10),
                   sep='|', file=file)
+
+
+def _get_comps_name_time(id):
+    with open(ARQ_COMP, 'rb') as comps:
+
+        comps.seek(((id - 1) * 3) * struct.calcsize(COMP_STRUCT_FORMAT))
+        comp_bin = comps.read(struct.calcsize(COMP_STRUCT_FORMAT))
+        comp_unpacked = struct.unpack(COMP_STRUCT_FORMAT, comp_bin)
+        names = []
+        for i in range(3):
+            names.append(comp_unpacked[2].decode('utf-8').strip('\x00'))
+        return names
