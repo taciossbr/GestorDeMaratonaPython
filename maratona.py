@@ -197,7 +197,17 @@ def listar_competidores():
 
 
 def gerar_emails():
-    pass
+    print()
+
+    length = os.stat(ARQ_COMP).st_size
+    with open(ARQ_EMAILS, 'w') as emails, open(ARQ_COMP, 'rb') as comps:
+        while comps.tell() < length:
+            comp_bin = comps.read(struct.calcsize(COMP_STRUCT_FORMAT))
+            comp_unpacked = struct.unpack(COMP_STRUCT_FORMAT, comp_bin)
+            emails.write(comp_unpacked[3].decode('utf-8').strip('\x00') + ',')
+
+    print('Emails salvos em:', ARQ_EMAILS)
+    print()
 
 
 def gerar_etiquetas():
