@@ -1,5 +1,7 @@
 # maratona.h
 
+from zipfile import ZipFile, ZIP_DEFLATED
+
 import getpass
 import os
 import struct
@@ -31,8 +33,13 @@ ARQ_COMP = "competidor.dat"
 ARQ_EMAILS = "emails.txt"
 ARQ_ETIQUETAS = "etiquetas.txt"
 ARQ_LISTAGEM = "listagem.txt"
+
 TIME_STRUCT_FORMAT = "i8s20s30s"
 COMP_STRUCT_FORMAT = "ii60s40siii"
+
+BACKUP_TIME = "time.csv"
+BACKUP_COMP = "competidor.csv"
+BACKUP_ZIP = "maratona_backup.zip"
 
 
 def cadastrar_time():
@@ -230,6 +237,29 @@ def gerar_etiquetas():
             print(file=et)
 
 
+def backup_restauracao():
+    print('-' * 60)
+    print('BACKUP E REUSTARACAO'.center(60))
+    print('-' * 60)
+    print()
+
+    print('\tb - Backup')
+    print('\tr - Restauracao')
+
+    op = input('Opção: ')
+    while op.lower() not in ['b', 'r', ]:
+        print('\tOpção Inválida!',)
+        print()
+        op = input('Opção: ')
+    if op.lower() == 'b':
+        _backup()
+    else:
+        print('Restaurar ira apagar todos os dados atuais')
+        if input('Deseja continuar[Y/n]? ') == 'Y':
+            _restore()
+        print()
+
+
 def _get_time(id):
     with open(ARQ_TIME, 'rb') as times:
         times.seek((id - 1) * struct.calcsize(TIME_STRUCT_FORMAT))
@@ -259,3 +289,72 @@ def _get_comps_name_time(id):
         for i in range(3):
             names.append(comp_unpacked[2].decode('utf-8').strip('\x00'))
         return names
+
+
+def _backup():
+    with open(BACKUP_TIME, 'w') as bkp_time, open(ARQ_TIME, 'rb') as times:
+        length = os.stat(ARQ_TIME).st_size
+        while times.tell() < length:
+            time_bin = times.read(struct.calcsize(TIME_STRUCT_FORMAT))
+            time_unpacked = struct.unpack(TIME_STRUCT_FORMAT, time_bin)
+
+            print(', '.join([x.decode('utf-8').strip('\x00')
+                             if isinstance(x, bytes) else str(x)
+                             for x in time_unpacked]),
+                  file=bkp_time)
+
+    with open(BACKUP_COMP, 'w') as bkp_comp, open(ARQ_COMP, 'rb') as comps:
+        length = os.stat(ARQ_COMP).st_size
+        while comps.tell() < length:
+            comp_bin = comps.read(struct.calcsize(COMP_STRUCT_FORMAT))
+            comp_unpacked = struct.unpack(COMP_STRUCT_FORMAT, comp_bin)
+
+            print(', '.join([x.decode('utf-8').strip('\x00')
+                             if isinstance(x, bytes) else str(x)
+                             for x in comp_unpacked]),
+                  file=bkp_comp)
+
+    with ZipFile(BACKUP_ZIP, 'w', ZIP_DEFLATED) as z:
+        z.write(BACKUP_COMP)
+        z.write(BACKUP_TIME)
+
+    print()
+    print('Backup realizado com sucesso em:', BACKUP_ZIP)
+    print()
+    os.remove(BACKUP_COMP)
+    os.remove(BACKUP_TIME)
+
+
+def _restore():
+    bkp_comp = None
+    bkp_time = None
+
+    with ZipFile(BACKUP_ZIP, 'r', ZIP_DEFLATED) as z:
+        bkp_comp = z.read(BACKUP_COMP)
+        bkp_time = z.read(BACKUP_TIME)
+
+    with open(ARQ_TIME, 'ab') as times:
+        for line in bkp_time.decode('utf-8').split('\n'):
+            if line:
+                l = line.split(', ')
+                t = (int(l[0]), *[bytes(x, 'utf-8') for x in l[1:]])
+
+                time = struct.pack(TIME_STRUCT_FORMAT, *t)
+                times.write(time)
+        print()
+        print('Times restaurados com sucesso!')
+        print()
+
+    with open(ARQ_COMP, 'ab') as comps:
+        for line in bkp_comp.decode('utf-8').split('\n'):
+            if line:
+                l = line.split(', ')
+                t = (*[int(x) for x in l[:2]],
+                     *[bytes(x, 'utf-8') for x in l[2:4]],
+                     *[int(x) for x in l[4:]])
+
+                comp = struct.pack(COMP_STRUCT_FORMAT, *t)
+                comps.write(comp)
+        print()
+        print('Competidores restaurados com sucesso!')
+        print()

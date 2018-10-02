@@ -10,7 +10,8 @@ LISTAR_TIMES = 3
 LISTAR_COMPETIDORES = 4
 GERAR_EMAILS = 5
 GERAR_ETIQUETAS = 6
-SAIR = 7
+BACKUP_RESTAURACAO = 7
+SAIR = 8
 
 
 def main():
@@ -21,6 +22,7 @@ def main():
         "Listar Competidores",
         "Gerar E-mails",
         "Gerar Etiquetas",
+        "Realizar Backup/Reustaracao",
         "Sair do Programa",
     ]
 
@@ -55,6 +57,7 @@ def router(op):
         LISTAR_COMPETIDORES: maratona.listar_competidores,
         GERAR_EMAILS: maratona.gerar_emails,
         GERAR_ETIQUETAS: maratona.gerar_etiquetas,
+        BACKUP_RESTAURACAO: maratona.backup_restauracao,
     }
     if op in a.keys():
         a[op]()
