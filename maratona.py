@@ -70,7 +70,8 @@ def cadastrar_time():
     print()
 
     with open(ARQ_COMP, 'ab') as competidores:
-        id_inicial = competidores.tell() // struct.calcsize(COMP_STRUCT_FORMAT) + 1
+        id_inicial = competidores.tell() //
+        struct.calcsize(COMP_STRUCT_FORMAT) + 1
         for i in range(3):
             print('ID:', id_inicial + i)
             print('Time:', nome_time)
@@ -164,7 +165,7 @@ def listar_times():
                 'senha': time_unpacked[2].decode('utf-8'),
                 'nome':  time_unpacked[3].decode('utf-8'),
             }
-            print(str(time['id']).rjust(4, '0'), 
+            print(str(time['id']).rjust(4, '0'),
                   time['login'].strip('\x00').ljust(8),
                   time['nome'].strip('\x00').ljust(30), sep=' | ')
         print()
@@ -232,7 +233,7 @@ def gerar_etiquetas():
             print(time['nome'], file=et)
             print(time['login'], file=et)
             print(time['senha'], file=et)
-            print('(', ', '.join(_get_comps_name_time(time['id'])), ')', 
+            print('(', ', '.join(_get_comps_name_time(time['id'])), ')',
                   sep='', file=et)
             print(file=et)
 
