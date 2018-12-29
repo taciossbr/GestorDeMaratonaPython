@@ -70,8 +70,7 @@ def cadastrar_time():
     print()
 
     with open(ARQ_COMP, 'ab') as competidores:
-        id_inicial = competidores.tell() //
-        struct.calcsize(COMP_STRUCT_FORMAT) + 1
+        id_inicial = competidores.tell() // struct.calcsize(COMP_STRUCT_FORMAT) + 1
         for i in range(3):
             print('ID:', id_inicial + i)
             print('Time:', nome_time)
@@ -83,6 +82,7 @@ def cadastrar_time():
                                id_time, bytes(nome, 'utf-8'),
                                bytes(email, 'utf-8'), ano, mes, dia)
             competidores.write(comp)
+            
             print()
             print('\tCompetidor gravado com sucesso!')
             print()
